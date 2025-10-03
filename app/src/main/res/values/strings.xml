@@ -1,0 +1,44 @@
+<resources>
+    <string name="app_name">Food Expiry Tracker</string>
+    
+    <!-- Main Activity -->
+    <string name="app_title">🍎 Food Expiry Tracker</string>
+    <string name="app_subtitle">Keep track of your food before it expires</string>
+    <string name="empty_state_title">No food items yet</string>
+    <string name="empty_state_message">Tap the + button to add your first food item</string>
+    <string name="empty_state_image">Empty state image</string>
+    <string name="add_food">Add Food</string>
+    
+    <!-- Food Item -->
+    <string name="food_name_placeholder">Food Name</string>
+    <string name="expiry_date_format">Expiry: %1$s</string>
+    <string name="expiry_date_value">Expiry: %1$s</string>
+    <string name="quantity_format">Qty: %1$s</string>
+    <string name="quantity_value">Qty: %1$s</string>
+    <string name="food_icon">Food icon</string>
+    
+    <!-- Add Food Dialog -->
+    <string name="add_new_food">Add New Food Item</string>
+    <string name="hint_food_name">Food Name</string>
+    <string name="hint_category">Category (e.g., Dairy, Fruits)</string>
+    <string name="hint_purchase_date">Purchase Date (YYYY-MM-DD)</string>
+    <string name="hint_expiry_date">Expiry Date (YYYY-MM-DD)</string>
+    <string name="hint_quantity">Quantity</string>
+    <string name="hint_notes">Notes</string>
+    <string name="save">Save</string>
+    
+    <!-- Delete Dialog -->
+    <string name="delete_food_item">Delete Food Item</string>
+    <string name="delete_confirmation">Are you sure you want to delete %1$s?</string>
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
+    <string name="item_deleted">Item deleted</string>
+    
+    <!-- Toast Messages -->
+    <string name="error_empty_food_name">Please enter food name</string>
+    <string name="food_added_success">Food added successfully</string>
+    <string name="food_add_failed">Failed to add food</string>
+    
+    <!-- Date Format -->
+    <string name="date_format">yyyy-MM-dd</string>
+</resources>
