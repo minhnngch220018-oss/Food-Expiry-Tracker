@@ -21,14 +21,28 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
+
+import android.os.Build;
+import android.Manifest;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+import androidx.work.Data;
+import androidx.work.OneTimeWorkRequest;
+import androidx.work.WorkManager;
+import androidx.work.ExistingWorkPolicy;
+import com.example.foodexpirytracker.notifications.ExpiryNotifierWorker;
+import com.example.foodexpirytracker.notifications.ExpiredNotifierWorker;
 
 public class MainActivity extends AppCompatActivity {
     private RecyclerView recyclerView;
     private FoodAdapter foodAdapter;
     private DatabaseHelper dbHelper;
     private List<Food> foodList;
+    private boolean sortAscendingByTimeLeft = true;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,6 +58,9 @@ public class MainActivity extends AppCompatActivity {
         // Initialize database helper
         dbHelper = new DatabaseHelper(this);
 
+        // Request notification permission on Android 13+
+        ensureNotificationPermission();
+
         // Initialize RecyclerView
         recyclerView = findViewById(R.id.recyclerView);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
@@ -54,6 +71,9 @@ public class MainActivity extends AppCompatActivity {
         // Set up FAB for adding new food items
         FloatingActionButton fabAdd = findViewById(R.id.fabAdd);
         fabAdd.setOnClickListener(view -> showAddFoodDialog());
+
+        FloatingActionButton fabSort = findViewById(R.id.fabSort);
+        fabSort.setOnClickListener(v -> toggleSort());
     }
 
     private void loadFoodItems() {
@@ -63,6 +83,12 @@ public class MainActivity extends AppCompatActivity {
         
         // Show empty state view if no items
         updateEmptyState();
+        
+        // Schedule reminders for existing items
+        for (Food f : foodList) {
+            scheduleExpiryReminder(f);
+            scheduleExpiredAlert(f);
+        }
     }
     
     public void updateEmptyState() {
@@ -126,6 +152,13 @@ public class MainActivity extends AppCompatActivity {
                 foodList.add(food);
                 foodAdapter.notifyDataSetChanged();
                 Toast.makeText(MainActivity.this, R.string.food_added_success, Toast.LENGTH_SHORT).show();
+                
+                // Schedule one-day-before reminder
+                scheduleExpiryReminder(food);
+                
+                // Schedule on-expiry alert
+                scheduleExpiredAlert(food);
+                
                 dialog.dismiss();
             } else {
                 Toast.makeText(MainActivity.this, R.string.food_add_failed, Toast.LENGTH_SHORT).show();
@@ -153,5 +186,102 @@ public class MainActivity extends AppCompatActivity {
                     }, year, month, day);
             datePickerDialog.show();
         });
+    }
+    private void scheduleExpiryReminder(Food food) {
+        try {
+            java.text.SimpleDateFormat dateFormat = new java.text.SimpleDateFormat(getString(R.string.date_format), java.util.Locale.getDefault());
+            java.util.Date expiry = dateFormat.parse(food.getExpiryDate());
+            if (expiry == null) return;
+            long triggerTime = expiry.getTime() - java.util.concurrent.TimeUnit.DAYS.toMillis(1);
+            long delay = triggerTime - System.currentTimeMillis();
+            if (delay <= 0) {
+                // If already within 1 day or past, optionally notify immediately
+                com.example.foodexpirytracker.notifications.NotificationHelper.sendNotification(this,
+                        "Food expiring soon",
+                        food.getName() + " expires tomorrow (" + food.getExpiryDate() + ")");
+                return;
+            }
+            Data input = new Data.Builder()
+                    .putInt(ExpiryNotifierWorker.KEY_FOOD_ID, food.getId())
+                    .putString(ExpiryNotifierWorker.KEY_FOOD_NAME, food.getName())
+                    .putString(ExpiryNotifierWorker.KEY_EXPIRY_DATE, food.getExpiryDate())
+                    .build();
+            OneTimeWorkRequest request = new OneTimeWorkRequest.Builder(ExpiryNotifierWorker.class)
+                    .setInitialDelay(delay, java.util.concurrent.TimeUnit.MILLISECONDS)
+                    .setInputData(input)
+                    .build();
+            WorkManager.getInstance(getApplicationContext())
+                    .enqueueUniqueWork("expiry_reminder_" + food.getId(), ExistingWorkPolicy.KEEP, request);
+        } catch (java.text.ParseException e) {
+            // ignore parse errors
+        }
+    }
+    private void ensureNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= 33) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
+                    != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(this,
+                        new String[]{Manifest.permission.POST_NOTIFICATIONS},
+                        1001);
+            }
+        }
+    }
+    private void scheduleExpiredAlert(Food food) {
+        try {
+            java.text.SimpleDateFormat dateFormat = new java.text.SimpleDateFormat(getString(R.string.date_format), java.util.Locale.getDefault());
+            java.util.Date expiry = dateFormat.parse(food.getExpiryDate());
+            if (expiry == null) return;
+            long triggerTime = expiry.getTime();
+            long delay = triggerTime - System.currentTimeMillis();
+            if (delay <= 0) {
+                // Already expired, notify immediately
+                com.example.foodexpirytracker.notifications.NotificationHelper.sendNotification(this,
+                        "Food expired",
+                        food.getName() + " has expired (" + food.getExpiryDate() + ")");
+                return;
+            }
+            Data input = new Data.Builder()
+                    .putInt(ExpiredNotifierWorker.KEY_FOOD_ID, food.getId())
+                    .putString(ExpiredNotifierWorker.KEY_FOOD_NAME, food.getName())
+                    .putString(ExpiredNotifierWorker.KEY_EXPIRY_DATE, food.getExpiryDate())
+                    .build();
+            OneTimeWorkRequest request = new OneTimeWorkRequest.Builder(ExpiredNotifierWorker.class)
+                    .setInitialDelay(delay, java.util.concurrent.TimeUnit.MILLISECONDS)
+                    .setInputData(input)
+                    .build();
+            WorkManager.getInstance(getApplicationContext())
+                    .enqueueUniqueWork("expired_alert_" + food.getId(), ExistingWorkPolicy.REPLACE, request);
+        } catch (java.text.ParseException e) {
+            // ignore parse errors
+        }
+    }
+    private long timeLeftMillis(Food f, SimpleDateFormat dateFormat, long now) {
+        try {
+            java.util.Date expiry = dateFormat.parse(f.getExpiryDate());
+            if (expiry == null) return Long.MAX_VALUE;
+            return expiry.getTime() - now;
+        } catch (java.text.ParseException e) {
+            return Long.MAX_VALUE;
+        }
+    }
+
+    private void applySortByTimeLeft() {
+        long now = System.currentTimeMillis();
+        SimpleDateFormat dateFormat = new SimpleDateFormat(getString(R.string.date_format), Locale.getDefault());
+        Comparator<Food> comparator = (a, b) -> {
+            long ta = timeLeftMillis(a, dateFormat, now);
+            long tb = timeLeftMillis(b, dateFormat, now);
+            return sortAscendingByTimeLeft ? Long.compare(ta, tb) : Long.compare(tb, ta);
+        };
+        Collections.sort(foodList, comparator);
+        foodAdapter.notifyDataSetChanged();
+    }
+
+    private void toggleSort() {
+        sortAscendingByTimeLeft = !sortAscendingByTimeLeft;
+        applySortByTimeLeft();
+        Toast.makeText(this,
+                sortAscendingByTimeLeft ? R.string.sort_soonest_first : R.string.sort_furthest_first,
+                Toast.LENGTH_SHORT).show();
     }
 }

@@ -11,6 +11,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.work.WorkManager;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -69,6 +70,13 @@ public class FoodAdapter extends RecyclerView.Adapter<FoodAdapter.FoodViewHolder
         builder.setTitle(R.string.delete_food_item);
         builder.setMessage(context.getString(R.string.delete_confirmation, food.getName()));
         builder.setPositiveButton(R.string.yes, (dialog, which) -> {
+            // Cancel any scheduled one-day-before reminder for this item
+            WorkManager.getInstance(context.getApplicationContext())
+                    .cancelUniqueWork("expiry_reminder_" + food.getId());
+            // Cancel any scheduled expiry-day alert for this item
+            WorkManager.getInstance(context.getApplicationContext())
+                    .cancelUniqueWork("expired_alert_" + food.getId());
+            
             dbHelper.deleteFood(food.getId());
             foodList.remove(position);
             notifyItemRemoved(position);

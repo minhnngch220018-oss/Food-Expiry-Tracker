@@ -41,4 +41,7 @@
     
     <!-- Date Format -->
     <string name="date_format">yyyy-MM-dd</string>
+    <string name="sort_by_time_left">Sort by time left</string>
+    <string name="sort_soonest_first">Sorted: soonest expiry first</string>
+    <string name="sort_furthest_first">Sorted: furthest expiry first</string>
 </resources>
