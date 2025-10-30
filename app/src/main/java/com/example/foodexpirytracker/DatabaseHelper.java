@@ -1,4 +1,5 @@
 package com.example.foodexpirytracker;
+
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
@@ -10,7 +11,7 @@ import java.util.List;
 
 public class DatabaseHelper extends SQLiteOpenHelper {
     private static final String DATABASE_NAME = "food_tracker.db";
-    private static final int DATABASE_VERSION = 1;
+    private static final int DATABASE_VERSION = 2;
 
     private static final String TABLE_FOOD = "food";
     private static final String COLUMN_ID = "id";
@@ -20,6 +21,13 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     private static final String COLUMN_EXPIRY_DATE = "expiry_date";
     private static final String COLUMN_QUANTITY = "quantity";
     private static final String COLUMN_NOTES = "notes";
+
+    // Users table
+    private static final String TABLE_USERS = "users";
+    private static final String COLUMN_EMAIL = "email";
+    private static final String COLUMN_PASSWORD_HASH = "password_hash";
+    private static final String COLUMN_SALT = "salt";
+    private static final String COLUMN_CREATED_AT = "created_at";
 
     public DatabaseHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -37,12 +45,29 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 + COLUMN_NOTES + " TEXT"
                 + ")";
         db.execSQL(CREATE_TABLE);
+
+        String CREATE_USERS = "CREATE TABLE " + TABLE_USERS + "("
+                + COLUMN_ID + " INTEGER PRIMARY KEY AUTOINCREMENT,"
+                + COLUMN_EMAIL + " TEXT UNIQUE NOT NULL,"
+                + COLUMN_PASSWORD_HASH + " TEXT NOT NULL,"
+                + COLUMN_SALT + " TEXT NOT NULL,"
+                + COLUMN_CREATED_AT + " INTEGER"
+                + ")";
+        db.execSQL(CREATE_USERS);
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        db.execSQL("DROP TABLE IF EXISTS " + TABLE_FOOD);
-        onCreate(db);
+        // Migrate without dropping existing data
+        if (oldVersion < 2) {
+            db.execSQL("CREATE TABLE IF NOT EXISTS " + TABLE_USERS + "("
+                    + COLUMN_ID + " INTEGER PRIMARY KEY AUTOINCREMENT,"
+                    + COLUMN_EMAIL + " TEXT UNIQUE NOT NULL,"
+                    + COLUMN_PASSWORD_HASH + " TEXT NOT NULL,"
+                    + COLUMN_SALT + " TEXT NOT NULL,"
+                    + COLUMN_CREATED_AT + " INTEGER"
+                    + ")");
+        }
     }
 
     // Insert
@@ -91,5 +116,49 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         SQLiteDatabase db = this.getWritableDatabase();
         db.delete(TABLE_FOOD, COLUMN_ID + "=?", new String[]{String.valueOf(id)});
         db.close();
+    }
+
+    // Users: add user with secure password hashing
+    public long addUser(String email, String passwordPlain) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        String salt = PasswordUtils.generateSalt();
+        String hash = PasswordUtils.hashPassword(passwordPlain.toCharArray(), salt);
+        values.put(COLUMN_EMAIL, email);
+        values.put(COLUMN_PASSWORD_HASH, hash);
+        values.put(COLUMN_SALT, salt);
+        values.put(COLUMN_CREATED_AT, System.currentTimeMillis());
+        long id = db.insert(TABLE_USERS, null, values);
+        db.close();
+        return id; // returns -1 on constraint violation (e.g., duplicate email)
+    }
+
+    // Users: check if a user exists by email
+    public boolean userExists(String email) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = db.query(TABLE_USERS, new String[]{COLUMN_ID}, COLUMN_EMAIL + "=?", new String[]{email}, null, null, null);
+        boolean exists = cursor.moveToFirst();
+        cursor.close();
+        db.close();
+        return exists;
+    }
+
+    // Users: verify email + password
+    public boolean verifyUser(String email, String passwordPlain) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = db.query(TABLE_USERS,
+                new String[]{COLUMN_PASSWORD_HASH, COLUMN_SALT},
+                COLUMN_EMAIL + "=?",
+                new String[]{email},
+                null, null, null);
+        boolean valid = false;
+        if (cursor.moveToFirst()) {
+            String hash = cursor.getString(0);
+            String salt = cursor.getString(1);
+            valid = PasswordUtils.verifyPassword(passwordPlain.toCharArray(), salt, hash);
+        }
+        cursor.close();
+        db.close();
+        return valid;
     }
 }

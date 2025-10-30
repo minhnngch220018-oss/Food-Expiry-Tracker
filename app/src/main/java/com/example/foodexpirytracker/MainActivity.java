@@ -19,13 +19,6 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Locale;
-
 import android.os.Build;
 import android.Manifest;
 import androidx.core.app.ActivityCompat;
@@ -36,6 +29,17 @@ import androidx.work.WorkManager;
 import androidx.work.ExistingWorkPolicy;
 import com.example.foodexpirytracker.notifications.ExpiryNotifierWorker;
 import com.example.foodexpirytracker.notifications.ExpiredNotifierWorker;
+import androidx.appcompat.widget.SearchView;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.content.Intent;
+
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity {
     private RecyclerView recyclerView;
@@ -43,6 +47,7 @@ public class MainActivity extends AppCompatActivity {
     private DatabaseHelper dbHelper;
     private List<Food> foodList;
     private boolean sortAscendingByTimeLeft = true;
+    private String currentQuery = "";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -74,6 +79,20 @@ public class MainActivity extends AppCompatActivity {
 
         FloatingActionButton fabSort = findViewById(R.id.fabSort);
         fabSort.setOnClickListener(v -> toggleSort());
+
+        SearchView searchView = findViewById(R.id.searchView);
+        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                applyFilter(query);
+                return true;
+            }
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                applyFilter(newText);
+                return true;
+            }
+        });
     }
 
     private void loadFoodItems() {
@@ -149,8 +168,7 @@ public class MainActivity extends AppCompatActivity {
             long id = dbHelper.addFood(food);
             if (id > 0) {
                 food.setId((int) id);
-                foodList.add(food);
-                foodAdapter.notifyDataSetChanged();
+                applyFilter(currentQuery);
                 Toast.makeText(MainActivity.this, R.string.food_added_success, Toast.LENGTH_SHORT).show();
                 
                 // Schedule one-day-before reminder
@@ -284,4 +302,24 @@ public class MainActivity extends AppCompatActivity {
                 sortAscendingByTimeLeft ? R.string.sort_soonest_first : R.string.sort_furthest_first,
                 Toast.LENGTH_SHORT).show();
     }
+
+    private void applyFilter(String query) {
+        currentQuery = (query == null) ? "" : query;
+        String q = currentQuery.trim().toLowerCase(Locale.getDefault());
+        List<Food> allItems = dbHelper.getAllFood();
+        foodList.clear();
+        if (q.isEmpty()) {
+            foodList.addAll(allItems);
+        } else {
+            for (Food item : allItems) {
+                String name = item.getName() == null ? "" : item.getName().toLowerCase(Locale.getDefault());
+                if (name.contains(q)) {
+                    foodList.add(item);
+                }
+            }
+        }
+        applySortByTimeLeft();
+        updateEmptyState();
+    }
+
 }

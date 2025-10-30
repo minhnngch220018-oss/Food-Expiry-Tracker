@@ -44,4 +44,21 @@
     <string name="sort_by_time_left">Sort by time left</string>
     <string name="sort_soonest_first">Sorted: soonest expiry first</string>
     <string name="sort_furthest_first">Sorted: furthest expiry first</string>
+    <string name="search_hint">Search food name</string>
+
+    <!-- Register -->
+    <string name="register">Register</string>
+    <string name="hint_email">Email</string>
+    <string name="hint_password">Password</string>
+    <string name="registration_success">Registered successfully</string>
+    <string name="registration_failed">Registration failed</string>
+    <string name="email_already_registered">Email already registered</string>
+    <string name="invalid_email">Please enter a valid email</string>
+    <string name="empty_password">Please enter a password</string>
+
+    <!-- Login -->
+    <string name="login">Login</string>
+    <string name="wrong_account_or_password">Wrong account or password</string>
+    <string name="already_have_account_login">Already have an account? Login</string>
+    <string name="doesnt_have_account_register">doesn\'t have account ? Register</string>
 </resources>

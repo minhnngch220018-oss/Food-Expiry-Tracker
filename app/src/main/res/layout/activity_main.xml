@@ -51,7 +51,7 @@
         android:id="@+id/emptyStateView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_below="@id/headerCard"
+        android:layout_below="@id/searchView"
         android:gravity="center"
         android:orientation="vertical"
         android:visibility="gone">
@@ -86,7 +86,7 @@
         android:id="@+id/recyclerView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_below="@id/headerCard"
+        android:layout_below="@id/searchView"
         android:clipToPadding="false"
         android:paddingTop="12dp"
         android:paddingBottom="88dp"
@@ -94,6 +94,15 @@
         android:scrollbars="vertical"
         android:scrollbarStyle="outsideOverlay"
         android:fadeScrollbars="true"/>
+
+    <androidx.appcompat.widget.SearchView
+        android:id="@+id/searchView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/headerCard"
+        android:layout_margin="12dp"
+        android:queryHint="@string/search_hint"
+        android:iconifiedByDefault="false" />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fabSort"
