@@ -3,21 +3,19 @@
     
     <!-- Main Activity -->
     <string name="app_title">🍎 Food Expiry Tracker</string>
-    <string name="app_subtitle">Keep track of your food before it expires</string>
-    <string name="empty_state_title">No food items yet</string>
-    <string name="empty_state_message">Tap the + button to add your first food item</string>
+    <string name="app_subtitle">Keep track of your foodItem before it expires</string>
+    <string name="empty_state_title">No foodItem items yet</string>
+    <string name="empty_state_message">Tap the + button to add your first foodItem item</string>
     <string name="empty_state_image">Empty state image</string>
     <string name="add_food">Add Food</string>
     
-    <!-- Food Item -->
+    <!-- FoodItem Item -->
     <string name="food_name_placeholder">Food Name</string>
-    <string name="expiry_date_format">Expiry: %1$s</string>
     <string name="expiry_date_value">Expiry: %1$s</string>
-    <string name="quantity_format">Qty: %1$s</string>
     <string name="quantity_value">Qty: %1$s</string>
     <string name="food_icon">Food icon</string>
     
-    <!-- Add Food Dialog -->
+    <!-- Add FoodItem Dialog -->
     <string name="add_new_food">Add New Food Item</string>
     <string name="hint_food_name">Food Name</string>
     <string name="hint_category">Category (e.g., Dairy, Fruits)</string>
@@ -35,16 +33,16 @@
     <string name="item_deleted">Item deleted</string>
     
     <!-- Toast Messages -->
-    <string name="error_empty_food_name">Please enter food name</string>
+    <string name="error_empty_food_name">Please enter foodItem name</string>
     <string name="food_added_success">Food added successfully</string>
-    <string name="food_add_failed">Failed to add food</string>
+    <string name="food_add_failed">Failed to add foodItem</string>
     
     <!-- Date Format -->
     <string name="date_format">yyyy-MM-dd</string>
     <string name="sort_by_time_left">Sort by time left</string>
     <string name="sort_soonest_first">Sorted: soonest expiry first</string>
     <string name="sort_furthest_first">Sorted: furthest expiry first</string>
-    <string name="search_hint">Search food name</string>
+    <string name="search_hint">Search foodItem name</string>
 
     <!-- Register -->
     <string name="register">Register</string>
@@ -59,6 +57,24 @@
     <!-- Login -->
     <string name="login">Login</string>
     <string name="wrong_account_or_password">Wrong account or password</string>
+    <string name="login_failed">Login failed</string>
     <string name="already_have_account_login">Already have an account? Login</string>
     <string name="doesnt_have_account_register">doesn\'t have account ? Register</string>
+    <string name="forgot_password">Forgot password?</string>
+
+    <!-- Reset Password Dialog -->
+    <string name="reset_password">Reset Password</string>
+    <string name="enter_email">Enter your registered email</string>
+    <string name="enter_new_password">Enter new password</string>
+    <string name="confirm_new_password">Confirm new password</string>
+    <string name="password_mismatch">Passwords do not match</string>
+    <string name="user_not_found">No account found for this email</string>
+    <string name="password_reset_success">Password updated successfully</string>
+    <string name="password_reset_failed">Failed to update password</string>
+    <string name="password_reset_email_sent">Password reset email sent</string>
+    <string name="verification_email_sent">Verification email sent. Please check your inbox</string>
+    <string name="verification_email_failed">Failed to send verification email</string>
+    <string name="email_not_verified">Email not verified. Please verify before logging in</string>
+    <string name="resend_verification_email">Resend verification email</string>
+    <string name="email_already_verified">Email already verified</string>
 </resources>

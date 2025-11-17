@@ -21,17 +21,31 @@ import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
-public class FoodAdapter extends RecyclerView.Adapter<FoodAdapter.FoodViewHolder> {
+/*
+ * Function: FoodListAdapter
+ * Purpose: Bind FoodItem data to RecyclerView list cards and handle item interactions
+ */
+public class FoodListAdapter extends RecyclerView.Adapter<FoodListAdapter.FoodViewHolder> {
     private Context context;
-    private List<Food> foodList;
+    private List<FoodItem> foodItemList;
     private DatabaseHelper dbHelper;
 
-    public FoodAdapter(Context context, List<Food> foodList, DatabaseHelper dbHelper, RecyclerView recyclerView, View emptyStateView) {
+    /*
+     * Function: FoodListAdapter constructor
+     * Purpose: Initialize adapter with context, data list, and database helper
+     * Params: context - activity context; foodItemList - items to display; dbHelper - DB operations
+     */
+    public FoodListAdapter(Context context, List<FoodItem> foodItemList, DatabaseHelper dbHelper) {
         this.context = context;
-        this.foodList = foodList;
+        this.foodItemList = foodItemList;
         this.dbHelper = dbHelper;
     }
 
+    /*
+     * Function: onCreateViewHolder
+     * Purpose: Inflate item view and create a ViewHolder instance
+     * Returns: FoodViewHolder
+     */
     @NonNull
     @Override
     public FoodViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -39,48 +53,57 @@ public class FoodAdapter extends RecyclerView.Adapter<FoodAdapter.FoodViewHolder
         return new FoodViewHolder(view);
     }
 
+    /*
+     * Function: onBindViewHolder
+     * Purpose: Bind FoodItem values to views and wire interactions
+     * Params: holder - view holder; position - item index
+     */
     @SuppressLint("StringFormatMatches")
     @Override
     public void onBindViewHolder(@NonNull FoodViewHolder holder, int position) {
-        Food food = foodList.get(position);
-        holder.tvFoodName.setText(food.getName());
-        holder.tvExpiryDate.setText(context.getString(R.string.expiry_date_value, food.getExpiryDate()));
-        holder.tvQuantity.setText(context.getString(R.string.quantity_value, food.getQuantity()));
+        FoodItem foodItem = foodItemList.get(position);
+        holder.tvFoodName.setText(foodItem.getName());
+        holder.tvExpiryDate.setText(context.getString(R.string.expiry_date_value, foodItem.getExpiryDate()));
+        holder.tvQuantity.setText(context.getString(R.string.quantity_value, foodItem.getQuantity()));
         
-        // Set food category icon
-        setFoodCategoryIcon(holder.ivFoodIcon, food.getCategory());
+        // Set foodItem category icon
+        setFoodCategoryIcon(holder.ivFoodIcon, foodItem.getCategory());
         
         // Set expiry indicator color
-        setExpiryIndicator(holder.expiryIndicator, food.getExpiryDate());
+        setExpiryIndicator(holder.expiryIndicator, foodItem.getExpiryDate());
         
         // Set long click listener for deleting items
         holder.itemView.setOnLongClickListener(v -> {
-            showDeleteDialog(food, position);
+            showDeleteDialog(foodItem, position);
             return true;
         });
     }
 
     @Override
     public int getItemCount() {
-        return foodList.size();
+        return foodItemList.size();
     }
 
-    private void showDeleteDialog(Food food, int position) {
+    /*
+     * Function: showDeleteDialog
+     * Purpose: Confirm and perform deletion of a food item, cancel related reminders
+     */
+    private void showDeleteDialog(FoodItem foodItem, int position) {
         androidx.appcompat.app.AlertDialog.Builder builder = new androidx.appcompat.app.AlertDialog.Builder(context);
         builder.setTitle(R.string.delete_food_item);
-        builder.setMessage(context.getString(R.string.delete_confirmation, food.getName()));
+        builder.setMessage(context.getString(R.string.delete_confirmation, foodItem.getName()));
         builder.setPositiveButton(R.string.yes, (dialog, which) -> {
             // Cancel any scheduled one-day-before reminder for this item
             WorkManager.getInstance(context.getApplicationContext())
-                    .cancelUniqueWork("expiry_reminder_" + food.getId());
+                    .cancelUniqueWork("expiry_reminder_" + foodItem.getId());
             // Cancel any scheduled expiry-day alert for this item
             WorkManager.getInstance(context.getApplicationContext())
-                    .cancelUniqueWork("expired_alert_" + food.getId());
+                    .cancelUniqueWork("expired_alert_" + foodItem.getId());
             
-            dbHelper.deleteFood(food.getId());
-            foodList.remove(position);
+            dbHelper.deleteFood(foodItem.getId());
+            foodItemList.remove(position);
             notifyItemRemoved(position);
-            notifyItemRangeChanged(position, foodList.size());
+            notifyItemRangeChanged(position, foodItemList.size());
             android.widget.Toast.makeText(context, R.string.item_deleted, android.widget.Toast.LENGTH_SHORT).show();
             
             // Update empty state view
@@ -92,6 +115,10 @@ public class FoodAdapter extends RecyclerView.Adapter<FoodAdapter.FoodViewHolder
         builder.show();
     }
 
+    /*
+     * Function: setFoodCategoryIcon
+     * Purpose: Choose an icon based on category keywords
+     */
     private void setFoodCategoryIcon(ImageView imageView, String category) {
         // Set icon based on category
         if (category == null || category.isEmpty()) {
@@ -116,6 +143,10 @@ public class FoodAdapter extends RecyclerView.Adapter<FoodAdapter.FoodViewHolder
         }
     }
     
+    /*
+     * Function: setExpiryIndicator
+     * Purpose: Color indicator based on days until expiry
+     */
     private void setExpiryIndicator(View indicator, String expiryDateStr) {
         try {
             SimpleDateFormat dateFormat = new SimpleDateFormat(context.getString(R.string.date_format), Locale.getDefault());
@@ -149,11 +180,19 @@ public class FoodAdapter extends RecyclerView.Adapter<FoodAdapter.FoodViewHolder
         }
     }
     
+    /*
+     * Function: FoodViewHolder
+     * Purpose: Cache view references for item_food layout
+     */
     public static class FoodViewHolder extends RecyclerView.ViewHolder {
         TextView tvFoodName, tvExpiryDate, tvQuantity;
         ImageView ivFoodIcon;
         View expiryIndicator;
 
+        /*
+         * Function: FoodViewHolder constructor
+         * Purpose: Bind child views from itemView
+         */
         public FoodViewHolder(View itemView) {
             super(itemView);
             tvFoodName = itemView.findViewById(R.id.tvFoodName);

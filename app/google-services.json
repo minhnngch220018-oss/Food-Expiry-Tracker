@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "368099728745",
+    "project_id": "food-expiry-tracker-f870f",
+    "storage_bucket": "food-expiry-tracker-f870f.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:368099728745:android:76d670236791567bcdf1f8",
+        "android_client_info": {
+          "package_name": "com.example.foodexpirytracker"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCMpIMmxZn_IJZL2E-BfRIlbfE2a4ml50g"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

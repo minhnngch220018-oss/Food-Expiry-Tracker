@@ -8,19 +8,20 @@
     android:background="@drawable/main_background"
     tools:context=".MainActivity">
 
-    <!-- App Header -->
+    <!-- FoodExpiryApp Header -->
     <androidx.cardview.widget.CardView
         android:id="@+id/headerCard"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         app:cardElevation="8dp"
-        app:cardCornerRadius="0dp">
+        app:cardCornerRadius="16dp"
+        app:cardUseCompatPadding="true">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:background="@color/purple_500">
+            android:background="?attr/colorPrimary">
 
             <TextView
                 android:id="@+id/appTitle"
@@ -81,7 +82,7 @@
             android:textColor="@android:color/darker_gray" />
     </LinearLayout>
 
-    <!-- RecyclerView food list -->
+    <!-- RecyclerView foodItem list -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerView"
         android:layout_width="match_parent"
@@ -114,7 +115,7 @@
         android:layout_marginBottom="88dp"
         app:fabSize="mini"
         app:tint="@android:color/white"
-        app:backgroundTint="@color/purple_500"
+        app:backgroundTint="?attr/colorPrimary"
         app:srcCompat="@android:drawable/ic_menu_sort_by_size"
         app:elevation="6dp"
         app:borderWidth="0dp"
@@ -129,7 +130,7 @@
         android:layout_margin="20dp"
         app:fabSize="normal"
         app:tint="@android:color/white"
-        app:backgroundTint="@color/purple_500"
+        app:backgroundTint="?attr/colorPrimary"
         app:srcCompat="@android:drawable/ic_input_add"
         app:elevation="8dp"
         app:borderWidth="0dp"
