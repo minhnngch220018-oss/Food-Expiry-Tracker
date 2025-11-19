@@ -194,9 +194,9 @@ public class MainActivity extends AppCompatActivity {
         final EditText etNotes = dialogView.findViewById(R.id.etNotes);
         Button btnSave = dialogView.findViewById(R.id.btnSave);
 
-        // Set up date pickers
+        // Set up date pickers: date-only for purchase, date+time for expiry
         setupDatePicker(etPurchaseDate);
-        setupDatePicker(etExpiryDate);
+        setupDateTimePicker(etExpiryDate);
 
         final AlertDialog dialog = builder.create();
 
@@ -268,14 +268,47 @@ public class MainActivity extends AppCompatActivity {
             datePickerDialog.show();
         });
     }
+
+    /*
+     * Function: setupDateTimePicker
+     * Purpose: Attach date + time picker to an EditText and format selected date-time
+     */
+    private void setupDateTimePicker(final EditText editText) {
+        editText.setOnClickListener(v -> {
+            final Calendar calendar = Calendar.getInstance();
+            int year = calendar.get(Calendar.YEAR);
+            int month = calendar.get(Calendar.MONTH);
+            int day = calendar.get(Calendar.DAY_OF_MONTH);
+
+            DatePickerDialog datePickerDialog = new DatePickerDialog(MainActivity.this,
+                    (view, selectedYear, selectedMonth, selectedDay) -> {
+                        calendar.set(Calendar.YEAR, selectedYear);
+                        calendar.set(Calendar.MONTH, selectedMonth);
+                        calendar.set(Calendar.DAY_OF_MONTH, selectedDay);
+
+                        // After date pick, show time picker
+                        int hour = calendar.get(Calendar.HOUR_OF_DAY);
+                        int minute = calendar.get(Calendar.MINUTE);
+                        android.app.TimePickerDialog timePickerDialog = new android.app.TimePickerDialog(MainActivity.this,
+                                (timeView, selHour, selMinute) -> {
+                                    calendar.set(Calendar.HOUR_OF_DAY, selHour);
+                                    calendar.set(Calendar.MINUTE, selMinute);
+
+                                    SimpleDateFormat dtFormat = new SimpleDateFormat(getString(R.string.date_time_format), Locale.getDefault());
+                                    editText.setText(dtFormat.format(calendar.getTime()));
+                                }, hour, minute, true);
+                        timePickerDialog.show();
+                    }, year, month, day);
+            datePickerDialog.show();
+        });
+    }
     /*
      * Function: scheduleExpiryReminder
      * Purpose: Schedule a notification one day before item expiry
      */
     private void scheduleExpiryReminder(FoodItem foodItem) {
         try {
-            java.text.SimpleDateFormat dateFormat = new java.text.SimpleDateFormat(getString(R.string.date_format), java.util.Locale.getDefault());
-            java.util.Date expiry = dateFormat.parse(foodItem.getExpiryDate());
+            java.util.Date expiry = parseDateFlexible(foodItem.getExpiryDate());
             if (expiry == null) return;
             long triggerTime = expiry.getTime() - java.util.concurrent.TimeUnit.DAYS.toMillis(1);
             long delay = triggerTime - System.currentTimeMillis();
@@ -321,8 +354,7 @@ public class MainActivity extends AppCompatActivity {
      */
     private void scheduleExpiredAlert(FoodItem foodItem) {
         try {
-            java.text.SimpleDateFormat dateFormat = new java.text.SimpleDateFormat(getString(R.string.date_format), java.util.Locale.getDefault());
-            java.util.Date expiry = dateFormat.parse(foodItem.getExpiryDate());
+            java.util.Date expiry = parseDateFlexible(foodItem.getExpiryDate());
             if (expiry == null) return;
             long triggerTime = expiry.getTime();
             long delay = triggerTime - System.currentTimeMillis();
@@ -354,11 +386,36 @@ public class MainActivity extends AppCompatActivity {
      */
     private long timeLeftMillis(FoodItem f, SimpleDateFormat dateFormat, long now) {
         try {
-            java.util.Date expiry = dateFormat.parse(f.getExpiryDate());
+            java.util.Date expiry = parseDateFlexible(f.getExpiryDate());
             if (expiry == null) return Long.MAX_VALUE;
             return expiry.getTime() - now;
         } catch (java.text.ParseException e) {
             return Long.MAX_VALUE;
+        }
+    }
+
+    /*
+     * Function: parseDateFlexible
+     * Purpose: Parse date-time using HH:mm if present, else fallback to date-only
+     */
+    private java.util.Date parseDateFlexible(String text) throws java.text.ParseException {
+        if (text == null || text.trim().isEmpty()) return null;
+        java.text.SimpleDateFormat dt = new java.text.SimpleDateFormat(getString(R.string.date_time_format), java.util.Locale.getDefault());
+        dt.setLenient(false);
+        try {
+            return dt.parse(text);
+        } catch (java.text.ParseException e) {
+            java.text.SimpleDateFormat d = new java.text.SimpleDateFormat(getString(R.string.date_format), java.util.Locale.getDefault());
+            d.setLenient(false);
+            java.util.Date dateOnly = d.parse(text);
+            // Treat date-only as midnight
+            java.util.Calendar cal = java.util.Calendar.getInstance();
+            cal.setTime(dateOnly);
+            cal.set(java.util.Calendar.HOUR_OF_DAY, 0);
+            cal.set(java.util.Calendar.MINUTE, 0);
+            cal.set(java.util.Calendar.SECOND, 0);
+            cal.set(java.util.Calendar.MILLISECOND, 0);
+            return cal.getTime();
         }
     }
 
